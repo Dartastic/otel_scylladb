@@ -2,7 +2,6 @@
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
-import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_scylladb_suppression.dart';
 
@@ -54,54 +53,70 @@ Future<T> tracedScyllaDB<T>({
   final t = tracer ?? OTel.tracerProvider().getTracer('otel_scylladb');
   final span = t.startSpan('scylladb $operation', kind: SpanKind.client);
   try {
-    span.setStringAttribute('db.system.name', 'scylladb');
+    span.addAttributes(
+        OTel.attributes([OTel.attributeString('db.system.name', 'scylladb')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.keyspace != null) {
-        span.setStringAttribute('db.namespace', res.keyspace!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('db.namespace', res.keyspace!)]));
       }
       if (res.table != null) {
-        span.setStringAttribute('db.collection.name', res.table!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('db.collection.name', res.table!)]));
       }
       if (res.statementType != null) {
-        span.setStringAttribute('db.operation.name', res.statementType!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('db.operation.name', res.statementType!)]));
       }
       if (res.queryText != null) {
-        span.setStringAttribute('db.query.text', res.queryText!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('db.query.text', res.queryText!)]));
       }
       if (res.consistencyLevel != null) {
-        span.setStringAttribute(
-          'db.cassandra.consistency_level',
-          res.consistencyLevel!,
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            'db.cassandra.consistency_level',
+            res.consistencyLevel!,
+          )
+        ]));
       }
       if (res.coordinator != null) {
-        span.setStringAttribute('db.cassandra.coordinator', res.coordinator!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString('db.cassandra.coordinator', res.coordinator!)
+        ]));
       }
       if (res.pageSize != null) {
-        span.setIntAttribute('db.cassandra.page_size', res.pageSize!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('db.cassandra.page_size', res.pageSize!)]));
       }
       if (res.rowsAffected != null) {
-        span.setIntAttribute('db.response.returned_rows', res.rowsAffected!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeInt('db.response.returned_rows', res.rowsAffected!)
+        ]));
       }
       if (res.datacenter != null) {
-        span.setStringAttribute('scylla.datacenter', res.datacenter!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('scylla.datacenter', res.datacenter!)]));
       }
       if (res.statusCode != null) {
-        span.setIntAttribute('http.response.status_code', res.statusCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
       }
       if (res.errorCode != null) {
-        span.setStringAttribute('scylladb.error.code', res.errorCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('scylladb.error.code', res.errorCode!)]));
       }
-      final fail =
-          res.errorCode != null ||
+      final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.setStringAttribute(
-          ErrorResource.errorType.key,
-          res.errorCode ?? 'scylla.error',
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            ErrorResource.errorType.key,
+            res.errorCode ?? 'scylla.error',
+          )
+        ]));
         span.setStatus(SpanStatusCode.Error, res.errorMessage);
       }
     }
